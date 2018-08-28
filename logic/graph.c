@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <graph.h>
 #include <list.h>
+#include <snoob.h>
 
 char K33[6][6] = {
     { 0, 1, 0, 1, 0, 1 },
@@ -118,9 +119,78 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
             return -1;
         }
     }
-    // TODO
-    errno = ENOSYS;
-    return -1;
+    unsigned long long pattern = (1UL << e) - 1;
+    for (int i = 0; i < adjacency_matrix_i; ++i) {
+        pattern = snoob(pattern);
+    }
+    int max = group->v * (group->v - 1) / 2;
+    if (pattern >= (1UL << max)) {
+        return 0;
+    }
+    for (int x = 0; x < group->v; ++x) {
+        for (int y = x + 1; y < group->v; ++y) {
+            isogroup->adjacency_matrix[x][y] = isogroup->adjacency_matrix[y][x] = pattern & 1;
+            pattern >>= 1;
+        }
+    }
+    list_node_t list = {
+        .previous = NULL,
+        .next = NULL,
+        .value = NULL
+    };
+    graph_t *graph = (graph_t *) malloc(sizeof(graph_t));
+    if (!graph) {
+        int tmp = errno;
+        perror("malloc");
+        for (int i = 0; i < group->v; ++i) {
+            free(isogroup->adjacency_matrix[i]);
+        }
+        free(isogroup->adjacency_matrix);
+        errno = tmp;
+        return -1;
+    }
+    for (int i = 0; ; ++i) {
+        int res = graph_init(graph, isogroup, i);
+        if (res < 0) {
+            int tmp = errno;
+            perror("graph_init");
+            if (list.value) {
+                list_clear_and_free(&list);
+            }
+            for (int i = 0; i < group->v; ++i) {
+                free(isogroup->adjacency_matrix[i]);
+            }
+            free(isogroup->adjacency_matrix);
+            free(graph);
+            errno = tmp;
+            return -1;
+        } else if (res) {
+            if (list.value) {
+                list_append(&list, graph);
+            } else {
+                list.value = graph;
+            }
+        } else {
+            break;
+        }
+    }
+    free(graph);
+    isogroup->num_graphs = list_length(&list);
+    isogroup->graphs = (graph_t *) malloc(sizeof(graph_t) * isogroup->num_graphs);
+    if (!isogroup->graphs) {
+        int tmp = errno;
+        perror("malloc");
+        list_clear_and_free(&list);
+        for (int i = 0; i < group->v; ++i) {
+            free(isogroup->adjacency_matrix[i]);
+        }
+        free(isogroup->adjacency_matrix);
+        errno = tmp;
+        return -1;
+    }
+    list_to_array(&list, isogroup->graphs, sizeof(graph_t));
+    list_clear_and_free(&list);
+    return 1;
 }
 
 int isomorphic_group_check_subgraphs2(isomorphic_group_t *group, char **target_adjacency_matrix, int changes) {
@@ -260,6 +330,7 @@ int graph_group_init(graph_group_t *group, int v) {
                 if (list.value) {
                     list_clear_and_free(&list);
                 }
+                free(isogroup);
                 errno = tmp;
                 return -1;
             } else if (res) {
@@ -270,10 +341,15 @@ int graph_group_init(graph_group_t *group, int v) {
                     if (list.value) {
                         list_clear_and_free(&list);
                     }
+                    free(isogroup);
                     errno = tmp;
                     return -1;
                 } else if (res) {
-                    list_append(&list, isogroup);
+                    if (list.value) {
+                        list_append(&list, isogroup);
+                    } else {
+                        list.value = isogroup;
+                    }
                     isogroup = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t));
                     if (!isogroup) {
                         int tmp = errno;
