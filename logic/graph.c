@@ -106,6 +106,40 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
     return -1;
 }
 
+int isomorphic_group_is_k33(isomorphic_group_t *group) {
+    // TODO
+    errno = ENOSYS;
+    return -1;
+}
+
+int isomorphic_group_is_k5(isomorphic_group_t *group) {
+    // TODO
+    errno = ENOSYS;
+    return -1;
+}
+
+int isomorphic_group_is_planar(isomorphic_group_t *group) {
+    int res = isomorphic_group_is_k33(group);
+    if (res < 0) {
+        int tmp = errno;
+        perror("isomorphic_group_is_k33");
+        errno = tmp;
+        return -1;
+    } else if (res) {
+        res = isomorphic_group_is_k5(group);
+        if (res < 0) {
+            int tmp = errno;
+            perror("isomorphic_group_is_k5");
+            errno = tmp;
+            return -1;
+        } else {
+            return res;
+        }
+    } else {
+        return 0;
+    }
+}
+
 int isomorphic_group_free(isomorphic_group_t *group) {
     int ret = 0;
     for (int i = 0; i < group->num_graphs; ++i) {
@@ -151,16 +185,27 @@ int graph_group_init(graph_group_t *group, int v) {
                 errno = tmp;
                 return -1;
             } else if (res) {
-                list_append(&list, isogroup);
-                isogroup = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t));
-                if (!isogroup) {
+                res = isomorphic_group_is_planar(isogroup);
+                if (res < 0) {
                     int tmp = errno;
-                    perror("malloc");
+                    perror("isomorphic_group_is_planar");
                     if (list.value) {
                         list_clear_and_free(&list);
                     }
                     errno = tmp;
                     return -1;
+                } else if (res) {
+                    list_append(&list, isogroup);
+                    isogroup = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t));
+                    if (!isogroup) {
+                        int tmp = errno;
+                        perror("malloc");
+                        if (list.value) {
+                            list_clear_and_free(&list);
+                        }
+                        errno = tmp;
+                        return -1;
+                    }
                 }
             } else {
                 break;
