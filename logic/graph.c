@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <graph.h>
+#include <list.h>
 
 int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
     graph->group = group;
@@ -125,9 +126,60 @@ int isomorphic_group_free(isomorphic_group_t *group) {
 
 int graph_group_init(graph_group_t *group, int v) {
     group->v = v;
-    // TODO
-    errno = ENOSYS;
-    return -1;
+    list_node_t list = {
+        .previous = NULL,
+        .next = NULL,
+        .value = NULL
+    };
+    isomorphic_group_t *isogroup = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t));
+    if (!isogroup) {
+        int tmp = errno;
+        perror("malloc");
+        errno = tmp;
+        return -1;
+    }
+    int max_e = v * (v - 1) / 2;
+    for (int e = 3; e <= max_e; ++e) {
+        for (int i = 0; ; ++i) {
+            int res = isomorphic_group_init(isogroup, group, e, i);
+            if (res < 0) {
+                int tmp = errno;
+                perror("isomorphic_group_init");
+                if (list.value) {
+                    list_clear_and_free(&list);
+                }
+                errno = tmp;
+                return -1;
+            } else if (res) {
+                list_append(&list, isogroup);
+                isogroup = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t));
+                if (!isogroup) {
+                    int tmp = errno;
+                    perror("malloc");
+                    if (list.value) {
+                        list_clear_and_free(&list);
+                    }
+                    errno = tmp;
+                    return -1;
+                }
+            } else {
+                break;
+            }
+        }
+    }
+    free(isogroup);
+    group->num_groups = list_length(&list);
+    group->groups = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t) * group->num_groups);
+    if (!group->groups) {
+        int tmp = errno;
+        perror("malloc");
+        list_clear_and_free(&list);
+        errno = tmp;
+        return -1;
+    }
+    list_to_array(&list, group->groups, sizeof(isomorphic_group_t));
+    list_clear_and_free(&list);
+    return 0;
 }
 
 int graph_group_free(graph_group_t *group) {
