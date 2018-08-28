@@ -300,7 +300,75 @@ int isomorphic_group_check_subgraphs2(isomorphic_group_t *group, char **target_a
                 }
             }
         }
-        // TODO contractions
+        int contracted_size = group->group->v - 1;
+        char **contracted_matrix = (char **) malloc(sizeof(char *) * contracted_size);
+        if (!contracted_matrix) {
+            int tmp = errno;
+            perror("malloc");
+            errno = tmp;
+            return -1;
+        }
+        for (int i = 0; i < contracted_size; ++i) {
+            contracted_matrix[i] = (char *) malloc(sizeof(char) * contracted_size);
+            if (!contracted_matrix[i]) {
+                int tmp = errno;
+                perror("malloc");
+                for (--i; i >= 0; --i) {
+                    free(contracted_matrix[i]);
+                }
+                free(contracted_matrix);
+                errno = tmp;
+                return -1;
+            }
+        }
+        for (int i = 0; i < contracted_size; ++i) {
+            for (int x = 0; x < i; ++x) {
+                for (int y = 0; y < i; ++y) {
+                    contracted_matrix[x][y] = group->adjacency_matrix[x][y];
+                }
+                contracted_matrix[x][i] = group->adjacency_matrix[x][i] + group->adjacency_matrix[x][i + 1];
+                for (int y = i + 2; y < contracted_size; ++y) {
+                    contracted_matrix[x][y - 1] = group->adjacency_matrix[x][y];
+                }
+            }
+            for (int y = 0; y < i; ++y) {
+                contracted_matrix[i][y] = group->adjacency_matrix[i][y] + group->adjacency_matrix[i + 1][y];
+            }
+            contracted_matrix[i][i] = group->adjacency_matrix[i][i] + group->adjacency_matrix[i][i + 1] + group->adjacency_matrix[i + 1][i] + group->adjacency_matrix[i + 1][i + 1];
+            for (int y = i + 2; y < contracted_size; ++y) {
+                contracted_matrix[i][y - 1] = group->adjacency_matrix[i][y] + group->adjacency_matrix[i + 1][y];
+            }
+            for (int x = i + 2; x < contracted_size; ++x) {
+                for (int y = 0; y < i; ++y) {
+                    contracted_matrix[x - 1][y] = group->adjacency_matrix[x][y];
+                }
+                contracted_matrix[x - 1][i] = group->adjacency_matrix[x][i] + group->adjacency_matrix[x][i + 1];
+                for (int y = i + 2; y < contracted_size; ++y) {
+                    contracted_matrix[x - 1][y - 1] = group->adjacency_matrix[x][y];
+                }
+            }
+            int res = isomorphic_group_check_subgraphs2(group, target_adjacency_matrix, changes - 1);
+            if (res < 0) {
+                int tmp = errno;
+                perror("isomorphic_group_check_subgraphs2");
+                for (i = 0; i < contracted_size; ++i) {
+                    free(contracted_matrix[i]);
+                }
+                free(contracted_matrix);
+                errno = tmp;
+                return -1;
+            } else if (res) {
+                for (i = 0; i < contracted_size; ++i) {
+                    free(contracted_matrix[i]);
+                }
+                free(contracted_matrix);
+                return 1;
+            }
+        }
+        for (int i = 0; i < contracted_size; ++i) {
+            free(contracted_matrix[i]);
+        }
+        free(contracted_matrix);
         return 0;
     } else {
         for (int xa = 0, xb = 0; xa < group->group->v; ++xa) {
