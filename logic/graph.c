@@ -73,6 +73,12 @@ int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
             return -1;
         }
     }
+    if (group->r < 3) {
+        for (int i = 0; i < group->r; ++i) {
+            memset(graph->dual_adjacency_matrix[i], 0, sizeof(char) * group->r);
+        }
+        return 1;
+    }
     unsigned long long pattern = (1 << (group->e << 1)) - 1;
     int max = group->r * group->group->v;
     while (face_matrix_i >= 0) {
