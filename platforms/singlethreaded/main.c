@@ -9,7 +9,7 @@ int main(int argc, char const **argv) {
         perror("logic_init");
         return 1;
     }
-    while (1) {
+    for (int i = 0; 1; ++i) {
         if (logic_alloc_work_unit(&ctx, &work) < 0) {
             perror("logic_alloc_work_unit");
             if (logic_cleanup(&ctx) < 0) {
@@ -37,6 +37,15 @@ int main(int argc, char const **argv) {
                 perror("logic_cleanup");
             }
             return 1;
+        }
+        if (i && i % 10 == 0) {
+            if (logic_print_status(&ctx) < 0) {
+                perror("logic_print_status");
+                if (logic_cleanup(&ctx) < 0) {
+                    perror("logic_cleanup");
+                }
+                return 1;
+            }
         }
     }
     if (logic_print_solution(&ctx) < 0) {

@@ -71,6 +71,18 @@ int logic_free_work_unit(context_t *ctx, work_unit_t *work) {
     return 0;
 }
 
+int logic_print_status(context_t *ctx) {
+    puts("Problem status");
+    puts("======");
+    puts("");
+    printf("Vertex Count = %d\n", ctx->graphs.v);
+    printf("Edge Count   = %d\n", ctx->group->e);
+    printf("Region Count = %d\n", ctx->group->r);
+    puts("");
+    puts("");
+    return 0;
+}
+
 int logic_print_solution(context_t *ctx) {
     puts("Problem solution found!");
     puts("======");
@@ -105,6 +117,8 @@ int logic_print_solution(context_t *ctx) {
         }
         puts("]");
     }
+    puts("");
+    puts("");
     return 0;
 }
 
