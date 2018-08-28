@@ -1,6 +1,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <graph.h>
 #include <list.h>
 #include <snoob.h>
@@ -32,7 +33,7 @@ int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
         return -1;
     }
     for (int i = 0; i < group->group->v; ++i) {
-        graph->face_matrix[i] = (char *) malloc(sizeof(char) * group->e);
+        graph->face_matrix[i] = (char *) malloc(sizeof(char) * group->r);
         if (!graph->face_matrix[i]) {
             int tmp = errno;
             perror("malloc");
@@ -72,9 +73,65 @@ int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
             return -1;
         }
     }
-    // TODO
-    errno = ENOSYS;
-    return -1;
+    unsigned long long pattern = (1 << (group->e << 1)) - 1;
+    int max = group->r * group->group->v;
+    while (face_matrix_i >= 0) {
+        if (pattern >= (1 << max)) {
+            for (int i = 0; i < group->r; ++i) {
+                free(graph->dual_adjacency_matrix[i]);
+            }
+            free(graph->dual_adjacency_matrix);
+            for (int i = 0; i < group->group->v; ++i) {
+                free(graph->face_matrix[i]);
+            }
+            free(graph->face_matrix);
+            return 0;
+        }
+        unsigned long long tmp = pattern;
+        for (int x = 0; x < group->group->v; ++x) {
+            for (int y = 0; y < group->e; ++y) {
+                graph->face_matrix[x][y] = tmp & 1;
+                tmp >>= 1;
+            }
+        }
+        int bad = 0;
+        for (int a = 0; a < group->r; ++a) {
+            for (int b = 0; b < group->r; ++b) {
+                if (a != b) {
+                    int good = 0;
+                    for (int x = 0; x < group->group->v; ++x) {
+                        if (graph->face_matrix[x][a] != graph->face_matrix[x][b]) {
+                            good = 1;
+                            break;
+                        }
+                    }
+                    if (!good) {
+                        bad = 1;
+                        break;
+                    }
+                }
+            }
+            if (bad) {
+                break;
+            }
+        }
+        if (!bad) {
+            --face_matrix_i;
+        }
+        pattern = snoob(pattern);
+    }
+    for (int x = 0; x < group->r; ++x) {
+        for (int y = x + 1; y < group->r; ++y) {
+            graph->dual_adjacency_matrix[x][y] = -1;
+            for (int z = 0; z < group->group->v; ++z) {
+                if (graph->face_matrix[z][x] && graph->face_matrix[z][y]) {
+                    ++graph->dual_adjacency_matrix[x][y];
+                }
+            }
+            graph->dual_adjacency_matrix[y][x] = graph->dual_adjacency_matrix[x][y];
+        }
+    }
+    return 1;
 }
 
 int dual_graph_is_isomorphic(graph_t *a, graph_t *b) {
