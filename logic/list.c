@@ -21,6 +21,7 @@ void list_insert(list_node_t *list, void *value) {
     node->next = list->next;
     node->value = value;
     list->next = node;
+    node->next->previous = node;
 }
 
 void list_insert2(list_node_t *list, void *value, int i) {
@@ -62,21 +63,27 @@ void *list_remove2(list_node_t *list, int i) {
 }
 
 void list_clear(list_node_t *list) {
+    list_node_t *first = list;
     if (list->next) {
         do {
             list = list->next;
-            free(list->previous);
+            if (first != list->previous) {
+                free(list->previous);
+            }
         } while (list->next);
         free(list);
     }
 }
 
 void list_clear_and_free(list_node_t *list) {
+    list_node_t *first = list;
     if (list->next) {
         do {
             free(list->value);
             list = list->next;
-            free(list->previous);
+            if (first != list->previous) {
+                free(list->previous);
+            }
         } while (list->next);
         free(list);
         free(list->value);

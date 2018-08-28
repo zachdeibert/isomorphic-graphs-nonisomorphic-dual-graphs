@@ -74,10 +74,14 @@ int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
         }
     }
     if (group->r < 3) {
-        for (int i = 0; i < group->r; ++i) {
-            memset(graph->dual_adjacency_matrix[i], 0, sizeof(char) * group->r);
+        if (face_matrix_i == 0) {
+            for (int i = 0; i < group->r; ++i) {
+                memset(graph->dual_adjacency_matrix[i], 0, sizeof(char) * group->r);
+            }
+            return 1;
+        } else {
+            return 0;
         }
-        return 1;
     }
     unsigned long long pattern = (1 << (group->e << 1)) - 1;
     int max = group->r * group->group->v;
@@ -148,11 +152,15 @@ int dual_graph_is_isomorphic(graph_t *a, graph_t *b) {
 
 int graph_free(graph_t *graph) {
     for (int i = 0; i < graph->group->group->v; ++i) {
-        free(graph->face_matrix[i]);
+        if (graph->face_matrix[i]) {
+            free(graph->face_matrix[i]);
+        }
     }
     free(graph->face_matrix);
     for (int i = 0; i < graph->group->r; ++i) {
-        free(graph->dual_adjacency_matrix[i]);
+        if (graph->dual_adjacency_matrix[i]) {
+            free(graph->dual_adjacency_matrix[i]);
+        }
     }
     free(graph->dual_adjacency_matrix);
     return 0;
@@ -232,6 +240,20 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
                 list_append(&list, graph);
             } else {
                 list.value = graph;
+            }
+            graph = (graph_t *) malloc(sizeof(graph_t));
+            if (!graph) {
+                int tmp = errno;
+                perror("malloc");
+                if (list.value) {
+                    list_clear_and_free(&list);
+                }
+                for (int i = 0; i < group->v; ++i) {
+                    free(isogroup->adjacency_matrix[i]);
+                }
+                free(isogroup->adjacency_matrix);
+                errno = tmp;
+                return -1;
             }
         } else {
             break;
