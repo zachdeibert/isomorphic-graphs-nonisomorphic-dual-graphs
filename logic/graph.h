@@ -36,8 +36,7 @@ int dual_graph_is_isomorphic(graph_t *a, graph_t *b);
 int graph_free(graph_t *graph);
 
 int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, int e, int adjacency_matrix_i);
-int isomorphic_group_is_k33(isomorphic_group_t *group);
-int isomorphic_group_is_k5(isomorphic_group_t *group);
+int isomorphic_group_check_subgraphs(isomorphic_group_t *group, char **target_adjacency_matrix);
 int isomorphic_group_is_planar(isomorphic_group_t *group);
 int isomorphic_group_free(isomorphic_group_t *group);
 

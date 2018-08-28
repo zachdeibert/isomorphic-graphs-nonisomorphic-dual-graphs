@@ -4,6 +4,23 @@
 #include <graph.h>
 #include <list.h>
 
+char K33[6][6] = {
+    { 0, 1, 0, 1, 0, 1 },
+    { 1, 0, 1, 0, 1, 0 },
+    { 0, 1, 0, 1, 0, 1 },
+    { 1, 0, 1, 0, 1, 0 },
+    { 0, 1, 0, 1, 0, 1 },
+    { 1, 0, 1, 0, 1, 0 }
+};
+
+char K5[5][5] = {
+    { 0, 1, 1, 1, 1 },
+    { 1, 0, 1, 1, 1 },
+    { 1, 1, 0, 1, 1 },
+    { 1, 1, 1, 0, 1 },
+    { 1, 1, 1, 1, 0 }
+};
+
 int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i) {
     graph->group = group;
     graph->face_matrix = (char **) malloc(sizeof(char *) * group->group->v);
@@ -106,30 +123,24 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
     return -1;
 }
 
-int isomorphic_group_is_k33(isomorphic_group_t *group) {
-    // TODO
-    errno = ENOSYS;
-    return -1;
-}
-
-int isomorphic_group_is_k5(isomorphic_group_t *group) {
+int isomorphic_group_check_subgraphs(isomorphic_group_t *group, char **target_adjacency_matrix) {
     // TODO
     errno = ENOSYS;
     return -1;
 }
 
 int isomorphic_group_is_planar(isomorphic_group_t *group) {
-    int res = isomorphic_group_is_k33(group);
+    int res = isomorphic_group_check_subgraphs(group, (char **) K33);
     if (res < 0) {
         int tmp = errno;
-        perror("isomorphic_group_is_k33");
+        perror("isomorphic_group_check_subgraphs");
         errno = tmp;
         return -1;
     } else if (res) {
-        res = isomorphic_group_is_k5(group);
+        res = isomorphic_group_check_subgraphs(group, (char **) K5);
         if (res < 0) {
             int tmp = errno;
-            perror("isomorphic_group_is_k5");
+            perror("isomorphic_group_check_subgraphs");
             errno = tmp;
             return -1;
         } else {
