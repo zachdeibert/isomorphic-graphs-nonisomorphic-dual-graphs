@@ -5,13 +5,13 @@
 #include <igndg.h>
 
 int logic_init(context_t *ctx) {
-    if (graph_group_init(ctx->graphs, 3) < 0) {
+    if (graph_group_init(&ctx->graphs, 3) < 0) {
         int tmp = errno;
         perror("graph_group_init");
         errno = tmp;
         return -1;
     }
-    ctx->group = ctx->graphs->groups;
+    ctx->group = ctx->graphs.groups;
     ctx->idx[0] = -1;
     ctx->idx[1] = 0;
     return 0;
@@ -23,21 +23,21 @@ int logic_alloc_work_unit(context_t *ctx, work_unit_t *work) {
             ctx->idx[0] = 0;
             if (++ctx->idx[1] >= ctx->group->num_graphs) {
                 ctx->idx[1] = 0;
-                if (++ctx->group >= ctx->graphs->groups + ctx->graphs->num_groups) {
-                    int v = ctx->graphs->v;
-                    if (graph_group_free(ctx->graphs) < 0) {
+                if (++ctx->group >= ctx->graphs.groups + ctx->graphs.num_groups) {
+                    int v = ctx->graphs.v;
+                    if (graph_group_free(&ctx->graphs) < 0) {
                         int tmp = errno;
                         perror("graph_group_free");
                         errno = tmp;
                         return -1;
                     }
-                    if (graph_group_init(ctx->graphs, v + 1) < 0) {
+                    if (graph_group_init(&ctx->graphs, v + 1) < 0) {
                         int tmp = errno;
                         perror("graph_group_init");
                         errno = tmp;
                         return -1;
                     }
-                    ctx->group = ctx->graphs->groups;
+                    ctx->group = ctx->graphs.groups;
                 }
             }
         }
@@ -76,13 +76,13 @@ int logic_print_solution(context_t *ctx) {
     puts("======");
     puts("");
     puts("Graph Properties:");
-    printf("  V = %d\n", ctx->graphs->v);
+    printf("  V = %d\n", ctx->graphs.v);
     printf("  E = %d\n", ctx->group->e);
     printf("  R = %d\n", ctx->group->r);
     puts("Adjacency Matrix:");
-    for (int y = 0; y < ctx->graphs->v; ++y) {
+    for (int y = 0; y < ctx->graphs.v; ++y) {
         printf("  [ ");
-        for (int x = 0; x < ctx->graphs->v; ++x) {
+        for (int x = 0; x < ctx->graphs.v; ++x) {
             printf("%d ", ctx->group->adjacency_matrix[x][y]);
         }
         puts("]");
@@ -109,7 +109,7 @@ int logic_print_solution(context_t *ctx) {
 }
 
 int logic_cleanup(context_t *ctx) {
-    if (graph_group_free(ctx->graphs) < 0) {
+    if (graph_group_free(&ctx->graphs) < 0) {
         int tmp = errno;
         perror("graph_group_free");
         errno = tmp;
