@@ -19,9 +19,9 @@ int logic_init(context_t *ctx) {
 
 int logic_alloc_work_unit(context_t *ctx, work_unit_t *work) {
     while (1) {
-        if (++ctx->idx[0] >= ctx->group->num_graphs) {
+        if (++ctx->idx[0] >= ctx->group[0]->num_graphs) {
             ctx->idx[0] = 0;
-            if (++ctx->idx[1] >= ctx->group->num_graphs) {
+            if (++ctx->idx[1] >= ctx->group[0]->num_graphs) {
                 ctx->idx[1] = 0;
                 if (++ctx->group >= ctx->graphs.groups + ctx->graphs.num_groups) {
                     int v = ctx->graphs.v;
@@ -42,8 +42,8 @@ int logic_alloc_work_unit(context_t *ctx, work_unit_t *work) {
             }
         }
         if (ctx->idx[0] != ctx->idx[1]) {
-            work->graphs[0] = ctx->group->graphs + ctx->idx[0];
-            work->graphs[1] = ctx->group->graphs + ctx->idx[1];
+            work->graphs[0] = ctx->group[0]->graphs[ctx->idx[0]];
+            work->graphs[1] = ctx->group[0]->graphs[ctx->idx[1]];
             work->solutions = ctx->solutions;
             return 0;
         }
@@ -76,8 +76,8 @@ int logic_print_status(context_t *ctx) {
     puts("======");
     puts("");
     printf("Vertex Count = %d\n", ctx->graphs.v);
-    printf("Edge Count   = %d\n", ctx->group->e);
-    printf("Region Count = %d\n", ctx->group->r);
+    printf("Edge Count   = %d\n", ctx->group[0]->e);
+    printf("Region Count = %d\n", ctx->group[0]->r);
     puts("");
     puts("");
     return 0;
@@ -89,13 +89,13 @@ int logic_print_solution(context_t *ctx) {
     puts("");
     puts("Graph Properties:");
     printf("  V = %d\n", ctx->graphs.v);
-    printf("  E = %d\n", ctx->group->e);
-    printf("  R = %d\n", ctx->group->r);
+    printf("  E = %d\n", ctx->group[0]->e);
+    printf("  R = %d\n", ctx->group[0]->r);
     puts("Adjacency Matrix:");
     for (int y = 0; y < ctx->graphs.v; ++y) {
         printf("  [ ");
         for (int x = 0; x < ctx->graphs.v; ++x) {
-            printf("%d ", ctx->group->adjacency_matrix[x][y]);
+            printf("%d ", ctx->group[0]->adjacency_matrix[x][y]);
         }
         puts("]");
     }

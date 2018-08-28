@@ -10,7 +10,7 @@ typedef struct work_unit work_unit_t;
 
 struct context {
     graph_group_t graphs;
-    isomorphic_group_t *group;
+    isomorphic_group_t **group;
     int idx[2];
     graph_t *solutions[2];
 };

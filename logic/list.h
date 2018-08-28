@@ -19,6 +19,6 @@ void *list_remove(list_node_t *list);
 void *list_remove2(list_node_t *list, int i);
 void list_clear(list_node_t *list);
 void list_clear_and_free(list_node_t *list);
-void list_to_array(list_node_t *list, void *arr, int size);
+void list_to_array(list_node_t *list, void **arr);
 
 #endif

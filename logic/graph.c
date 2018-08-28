@@ -261,7 +261,7 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
     }
     free(graph);
     isogroup->num_graphs = list_length(&list);
-    isogroup->graphs = (graph_t *) malloc(sizeof(graph_t) * isogroup->num_graphs);
+    isogroup->graphs = (graph_t **) malloc(sizeof(graph_t *) * isogroup->num_graphs);
     if (!isogroup->graphs) {
         int tmp = errno;
         perror("malloc");
@@ -273,8 +273,8 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
         errno = tmp;
         return -1;
     }
-    list_to_array(&list, isogroup->graphs, sizeof(graph_t));
-    list_clear_and_free(&list);
+    list_to_array(&list, (void **) isogroup->graphs);
+    list_clear(&list);
     return 1;
 }
 
@@ -376,7 +376,7 @@ int isomorphic_group_is_planar(isomorphic_group_t *group) {
 int isomorphic_group_free(isomorphic_group_t *group) {
     int ret = 0;
     for (int i = 0; i < group->num_graphs; ++i) {
-        if (graph_free(group->graphs + i) < 0) {
+        if (graph_free(group->graphs[i]) < 0) {
             int tmp = errno;
             perror("graph_free");
             errno = tmp;
@@ -453,7 +453,7 @@ int graph_group_init(graph_group_t *group, int v) {
     }
     free(isogroup);
     group->num_groups = list_length(&list);
-    group->groups = (isomorphic_group_t *) malloc(sizeof(isomorphic_group_t) * group->num_groups);
+    group->groups = (isomorphic_group_t **) malloc(sizeof(isomorphic_group_t *) * group->num_groups);
     if (!group->groups) {
         int tmp = errno;
         perror("malloc");
@@ -461,15 +461,15 @@ int graph_group_init(graph_group_t *group, int v) {
         errno = tmp;
         return -1;
     }
-    list_to_array(&list, group->groups, sizeof(isomorphic_group_t));
-    list_clear_and_free(&list);
+    list_to_array(&list, (void **) group->groups);
+    list_clear(&list);
     return 0;
 }
 
 int graph_group_free(graph_group_t *group) {
     int ret = 0;
     for (int i = 0; i < group->num_groups; ++i) {
-        if (isomorphic_group_free(group->groups + i) < 0) {
+        if (isomorphic_group_free(group->groups[i]) < 0) {
             int tmp = errno;
             perror("isomorphic_group_free");
             errno = tmp;

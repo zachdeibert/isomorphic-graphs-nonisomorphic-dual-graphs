@@ -90,10 +90,9 @@ void list_clear_and_free(list_node_t *list) {
     }
 }
 
-void list_to_array(list_node_t *list, void *arr, int size) {
+void list_to_array(list_node_t *list, void **arr) {
     while (list) {
-        memcpy(arr, list->value, size);
-        arr += size;
+        *arr++ = list->value;
         list = list->next;
     }
 }

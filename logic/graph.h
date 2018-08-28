@@ -22,13 +22,13 @@ struct isomorphic_group {
     int r;
     char **adjacency_matrix;
     int num_graphs;
-    graph_t *graphs;
+    graph_t **graphs;
 };
 
 struct graph_group {
     int v;
     int num_groups;
-    isomorphic_group_t *groups;
+    isomorphic_group_t **groups;
 };
 
 int graph_init(graph_t *graph, isomorphic_group_t *group, int face_matrix_i);
