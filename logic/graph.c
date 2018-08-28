@@ -123,24 +123,69 @@ int isomorphic_group_init(isomorphic_group_t *isogroup, graph_group_t *group, in
     return -1;
 }
 
-int isomorphic_group_check_subgraphs(isomorphic_group_t *group, char **target_adjacency_matrix) {
-    // TODO
-    errno = ENOSYS;
-    return -1;
+int isomorphic_group_check_subgraphs2(isomorphic_group_t *group, char **target_adjacency_matrix, int changes) {
+    if (changes > 0) {
+        // Try deletions
+        for (int x = 0; x < group->group->v; ++x) {
+            for (int y = x; y < group->group->v; ++y) {
+                if (group->adjacency_matrix[x][y]) {
+                    group->adjacency_matrix[x][y] = 0;
+                    group->adjacency_matrix[y][x] = 0;
+                    int res = isomorphic_group_check_subgraphs2(group, target_adjacency_matrix, changes - 1);
+                    group->adjacency_matrix[x][y] = 1;
+                    group->adjacency_matrix[y][x] = 1;
+                    if (res < 0) {
+                        int tmp = errno;
+                        perror("isomorphic_group_check_subgraphs2");
+                        errno = tmp;
+                        return -1;
+                    } else if (res) {
+                        return 1;
+                    }
+                }
+            }
+        }
+        // TODO contractions
+        return 0;
+    } else {
+        for (int xa = 0, xb = 0; xa < group->group->v; ++xa) {
+            int do_x = 0;
+            for (int y = 0; y < group->group->v; ++y) {
+                if (group->adjacency_matrix[xa][y] != 0) {
+                    do_x = 1;
+                    break;
+                }
+            }
+            if (do_x) {
+                for (int ya = 0, yb = 0; ya < group->group->v; ++ya) {
+                    int do_y = 0;
+                    for (int x = 0; x < group->group->v; ++x) {
+                        if (group->adjacency_matrix[x][ya] != 0) {
+                            do_y = 1;
+                            break;
+                        }
+                    }
+                    if (do_y) {
+                        if (group->adjacency_matrix[xa][ya] != target_adjacency_matrix[xb][yb]) {
+                            return 0;
+                        }
+                        ++yb;
+                    }
+                }
+                ++xb;
+            }
+        }
+        return 1;
+    }
 }
 
-int isomorphic_group_is_planar(isomorphic_group_t *group) {
-    int res = isomorphic_group_check_subgraphs(group, (char **) K33);
-    if (res < 0) {
-        int tmp = errno;
-        perror("isomorphic_group_check_subgraphs");
-        errno = tmp;
-        return -1;
-    } else if (res) {
-        res = isomorphic_group_check_subgraphs(group, (char **) K5);
+int isomorphic_group_check_subgraphs(isomorphic_group_t *group, char **target_adjacency_matrix, int e) {
+    int changes = group->e - e;
+    if (changes > 0) {
+        int res = isomorphic_group_check_subgraphs2(group, target_adjacency_matrix, changes);
         if (res < 0) {
             int tmp = errno;
-            perror("isomorphic_group_check_subgraphs");
+            perror("isomorphic_group_check_subgraphs2");
             errno = tmp;
             return -1;
         } else {
@@ -148,6 +193,28 @@ int isomorphic_group_is_planar(isomorphic_group_t *group) {
         }
     } else {
         return 0;
+    }
+}
+
+int isomorphic_group_is_planar(isomorphic_group_t *group) {
+    int res = isomorphic_group_check_subgraphs(group, (char **) K33, 9);
+    if (res < 0) {
+        int tmp = errno;
+        perror("isomorphic_group_check_subgraphs");
+        errno = tmp;
+        return -1;
+    } else if (res) {
+        return 0;
+    } else {
+        res = isomorphic_group_check_subgraphs(group, (char **) K5, 10);
+        if (res < 0) {
+            int tmp = errno;
+            perror("isomorphic_group_check_subgraphs");
+            errno = tmp;
+            return -1;
+        } else {
+            return !res;
+        }
     }
 }
 
